@@ -6,3 +6,144 @@
 | `isUserAMonkey()`    | ❌ 启动后拦截     | ✅ 有效         | ✅       | 启动后再处理，有页面闪现               |
 | 验证调用者            | ✅ 中            | ❌ 无效         | ✅       | callingActivity 可能为 null   |
 | Monkey 黑名单文件     | ✅ 强            | ✅ 有效         | ❌       | 仅限测试阶段                     |
+
+
+
+
+# 🛡️ Android 防止 Monkey / 非法启动 Activity 的几种方式
+
+## ✅ 1. 使用 `android:exported="false"` 禁止外部启动
+
+用于内部页面，防止通过 ADB/Intent 等方式直接启动。
+
+```xml
+<activity
+    android:name=".internal.SecretActivity"
+    android:exported="false" />
+```
+
+- **优点**：系统级拦截，无法被外部拉起。
+- **适用场景**：内部页面、调试页面等。
+
+---
+
+## ✅ 2. 使用 `android:permission` 限制启动权限
+
+要求调用方具有特定权限，一般配合 `signature` 等级使用。
+
+### 定义权限：
+
+```xml
+<permission
+    android:name="com.example.permission.SECRET_LAUNCH"
+    android:protectionLevel="signature" />
+```
+
+### 应用于 Activity：
+
+```xml
+<activity
+    android:name=".secure.SecureActivity"
+    android:permission="com.example.permission.SECRET_LAUNCH"
+    android:exported="true" />
+```
+
+- **优点**：只有签名一致的应用可启动。
+- **适用场景**：跨模块通信、安全页面。
+
+---
+
+## ✅ 3. 运行时判断是否由 Monkey 启动
+
+通过系统 API 检测是否为 Monkey 工具拉起，主动终止页面。
+
+```kotlin
+if (ActivityManager.isUserAMonkey()) {
+    finish()
+    return
+}
+```
+
+- **优点**：防止 Monkey 执行测试逻辑。
+- **适用场景**：关键 Activity 或对外暴露的入口。
+
+---
+
+## ✅ 4. 判断调用来源 (`getCallingActivity`)
+
+检测是否为合法来源调用启动：
+
+```kotlin
+val source = callingActivity?.packageName
+if (source == null || source != "com.example.launcher") {
+    finish()
+}
+```
+
+- **注意**：某些系统版本/显式 Intent 会导致 `null`。
+- **适用场景**：需验证跳转来源的页面。
+
+---
+
+## ✅ 5. 参数合法性检查 + 异常来源识别
+
+结合 `Intent` 参数或特殊标志位判断是否非法调用：
+
+```kotlin
+val isMonkey = ActivityManager.isUserAMonkey()
+val isTestMode = intent.getBooleanExtra("test_mode", false)
+if (isMonkey || isTestMode) {
+    finish()
+}
+```
+
+- **优点**：细粒度判断 Monkey 或异常环境。
+- **适用场景**：需要更灵活防御逻辑的模块。
+
+---
+
+## ✅ 6. 不注册 `intent-filter` 隐藏 Activity
+
+只通过 `startActivity` 显式启动，不对外暴露。
+
+```xml
+<activity android:name=".internal.HiddenActivity"
+          android:exported="false" />
+```
+
+- **优点**：Monkey 无法扫描启动。
+- **适用场景**：内部跳转页面。
+
+---
+
+## ✅ 7. 使用 Monkey 启动黑名单（测试专用）
+
+用于测试环境中限制 Monkey 的启动范围。
+
+```bash
+monkey --pkg-blacklist-file blacklist.txt
+```
+
+### 示例 `blacklist.txt` 文件：
+
+```
+# Block specific activities
+com.example/.internal.SecretActivity
+```
+
+- **适用场景**：自动化 Monkey 测试时避免拉起敏感页面。
+- **仅测试使用**。
+
+---
+
+## 🔚 总结对比表
+
+| 方法                           | 类型             | 是否 Manifest 配置 | 是否代码实现 | Monkey 可防御 | 是否适合发布版 |
+|--------------------------------|------------------|---------------------|---------------|----------------|------------------|
+| `exported=false`               | 系统限制         | ✅                  | ❌            | ✅             | ✅               |
+| `android:permission`           | 权限限制         | ✅                  | ❌            | ✅             | ✅               |
+| `isUserAMonkey()`              | 运行时检测       | ❌                  | ✅            | ✅             | ✅               |
+| `getCallingActivity` 检查      | 启动源验证       | ❌                  | ✅            | ⚠️             | ✅               |
+| 参数合法性检查                 | 运行时防御       | ❌                  | ✅            | ✅             | ✅               |
+| 隐藏 Activity                  | 不注册入口       | ✅                  | ❌            | ✅             | ✅               |
+| Monkey 黑名单                  | 测试配置         | ❌                  | ❌            | ✅             | ❌（测试用）    |
