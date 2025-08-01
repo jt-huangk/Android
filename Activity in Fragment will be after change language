@@ -1,0 +1,18 @@
+push 到flowmanger之前 ：
+
+MovingMapFragment{dc094e4 #5 id=0x7f0a039a MovingMapStatecom.telenav.arp.module.navigation.movingmap.MovingMapPage@93bd787}
+com.telenav.arp.module.map.MainActivity@ade3859
+ 
+open setting, and cache the MovingMapFragment：
+    MovingMapFragment{dc094e4 #5 id=0x7f0a039a MovingMapStatecom.telenav.arp.module.navigation.movingmap.MovingMapPage@93bd787}
+    com.telenav.arp.module.map.MainActivity@ade3859
+ 
+ 
+after language，wait for 30s~1m：
+    MovingMapFragment{dd1a3 #5 id=0x7f0a039a MovingMapStatecom.telenav.arp.module.navigation.movingmap.MovingMapPage@93bd787}
+    null
+
+conclusion:
+after change language, the old fragment(dc094e4) will be changed to new one(dd1a3), and its context will be null.
+
+
