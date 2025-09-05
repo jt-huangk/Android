@@ -1,0 +1,7 @@
+如何获得theme文件里面的resource name：
+private void printTheme(String tag){
+        TypedValue outValue = new TypedValue();
+        getContext().getTheme().resolveAttribute(android.R.attr.windowBackground, outValue, true);
+        String resName = getResources().getResourceName(outValue.resourceId);
+        Log.d("ThemeCheck-hhhh", tag +"windowBackground resourceName=" + resName);
+}
