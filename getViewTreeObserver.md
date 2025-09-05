@@ -5,6 +5,8 @@ Be careful to use view.getViewTreeObserver()
 
 After attch to window， the object is mAttachInfo.mTreeObserver; otherwise  is mFloatingTreeObserver
 
+could use isAttachedToWindow() to check its status
+
 2)you should check whether the ViewTreeObserver is still alive. Otherwise, you risk an exception or a memory leak.
 
 
