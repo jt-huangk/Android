@@ -9,5 +9,7 @@ could use isAttachedToWindow() to check its status
 
 2)you should check whether the ViewTreeObserver is still alive. Otherwise, you risk an exception or a memory leak.
 
+3)onViewCreated and onDestoryView, the view.getViewTreeObserver() is the same object
+
 
 
