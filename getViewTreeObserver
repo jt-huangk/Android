@@ -1,0 +1,4 @@
+be careful to use view.getViewTreeObserver()
+1)the object could be different from the one in onCreateView and onDestoryView in Fragment
+
+
